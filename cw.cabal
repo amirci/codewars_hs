@@ -27,6 +27,8 @@ test-suite spec
     ,unordered-containers
     ,scientific
     ,vector
+    ,parsec
+    ,mtl
     ,multiset
   hs-source-dirs:
     test
