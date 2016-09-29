@@ -1,28 +1,33 @@
 module SimplifyPoly where
 
---import Data.List.Split
 import Data.List
 import Data.Maybe
 import Debug.Trace
 
-import Text.Regex
 import Text.Read
 
 import Text.ParserCombinators.Parsec
 import Control.Applicative hiding ((<|>), optional, many)
 
 simplify :: String -> String
-simplify str = str
-
-splitTerms = next . matchRegexAll rx 
+simplify str = rmFirstPlus $ concatMap toTerm $ solve $ mkTerms str
   where
-    rx = mkRegex "([+-]?[0-9]*|[a-z]+)"
-    next (Just (_, match, [], _)) = [match]
-    next (Just (_, match, after, _)) = match : splitTerms after
-    next _ = []
+    solve = map sumTerms . groupBy sameFst . sort
+    sumTerms = foldl1 (\(v, n1) (_, n2) -> (v, n1 + n2))
+    sameFst (a, _) (b, _) = a == b
+    mkTerms = unwrap . parse terms ""
+    rmFirstPlus = dropWhile (== '+')
+    unwrap (Right ts) = ts
+    unwrap _ = []
+    toTerm (var, n)
+      | n == 1 = '+' : var
+      | n >  1 = '+' : show n ++ var
+      | n == 0 = ""
+      | otherwise = show n ++ var
+
 
 int = rd <$> number
-  where 
+  where
     number = many1 digit
     rd = (readMaybe :: String -> Maybe Int)
 
@@ -42,7 +47,7 @@ term = do
   sg <- option 1 sign
   qt <- option (Just 1) int
   vr <- var
-  return (sg * (fromJust qt), vr)
+  return (sort vr, sg * (fromJust qt))
 
 terms = many1 term
 
