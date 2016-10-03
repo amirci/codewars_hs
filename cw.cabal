@@ -19,4 +19,4 @@ test-suite spec
                , hspec >= 1.11
                , QuickCheck
                , split
-               , parsec
+               , regex-compat

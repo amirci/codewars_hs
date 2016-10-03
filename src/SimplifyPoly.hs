@@ -2,23 +2,17 @@ module SimplifyPoly where
 
 import Data.List
 import Data.Maybe
-
+import Text.Regex
 import Text.Read
 
-import Text.ParserCombinators.Parsec
-import Control.Applicative hiding ((<|>), optional, many)
-
 simplify :: String -> String
-simplify str = rmFirstPlus $ concatMap toTerm $ solve $ mkTerms str
+simplify str = concatMap toTerm $ solve $ mkTerms str
   where
     solve = sortBy shortest . map sumTerms . groupBy sameFst . sort 
+    mkTerms = map parse . terms
     shortest (a, _) (b, _) = compare (length a) (length b)
     sumTerms = foldl1 (\(v, n1) (_, n2) -> (v, n1 + n2))
     sameFst (a, _) (b, _) = a == b
-    mkTerms = unwrap . parse terms ""
-    rmFirstPlus = dropWhile (== '+')
-    unwrap (Right ts) = ts
-    unwrap _ = []
     toTerm (var, n)
       | n == 1 = '+' : var
       | n >  1 = '+' : show n ++ var
@@ -26,26 +20,16 @@ simplify str = rmFirstPlus $ concatMap toTerm $ solve $ mkTerms str
       | n == -1 = '-' : var
       | otherwise = show n ++ var
 
-
-int = rd <$> number
+terms "" = []
+terms str = fromJust $ fmap mkTuple $ matchRegexAll re str
   where
-    number = many1 digit
-    rd = (read :: String -> Int)
+    re = mkRegex "([\\+-]?[0-9]*)([a-z]+)"
+    mkTuple (_, _, rest, [num, var]) = (var, num) : terms rest
 
-sign = toSign <$> (plus <|> minus)
+parse (var, num) = ((sort var), (parse' num))
   where
-    plus = char '+'
-    minus = char '-'
-    toSign '+' = 1
-    toSign '-' = -1
-
-var = many1 lower
-
-term = do
-  sg <- option 1 sign
-  qt <- option 1 int
-  vr <- var
-  return (sort vr, sg * qt)
-
-terms = many1 term
-
+    parse' ""  = 1
+    parse' "+" = 1
+    parse' "-" = -1
+    parse' num = rd num
+    rd = read :: String -> Int
