@@ -7,7 +7,7 @@ import Debug.Trace
 import Text.Read
 
 simplify :: String -> String
-simplify str = rmPlus $ concatMap toTerm $ solve $ mkTerms str
+simplify = rmPlus . concatMap toTerm . solve . mkTerms
   where
     solve = sortBy shortest . map sumTerms . groupBy sameFst . sort 
     mkTerms = map parse . terms
@@ -23,8 +23,7 @@ simplify str = rmPlus $ concatMap toTerm $ solve $ mkTerms str
 
 rmPlus = dropWhile ((==) '+')
 
-terms "" = []
-terms str = fromJust $ fmap mkTuple $ matchRegexAll re str
+terms = fromMaybe [] . fmap mkTuple . matchRegexAll re
   where
     re = mkRegex "([\\+-]?[0-9]*)([a-z]+)"
     mkTuple (_, _, rest, [num, var]) = (var, num) : terms rest
