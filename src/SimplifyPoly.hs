@@ -3,10 +3,11 @@ module SimplifyPoly where
 import Data.List
 import Data.Maybe
 import Text.Regex
+import Debug.Trace
 import Text.Read
 
 simplify :: String -> String
-simplify str = concatMap toTerm $ solve $ mkTerms str
+simplify str = rmPlus $ concatMap toTerm $ solve $ mkTerms str
   where
     solve = sortBy shortest . map sumTerms . groupBy sameFst . sort 
     mkTerms = map parse . terms
@@ -20,6 +21,8 @@ simplify str = concatMap toTerm $ solve $ mkTerms str
       | n == -1 = '-' : var
       | otherwise = show n ++ var
 
+rmPlus = dropWhile ((==) '+')
+
 terms "" = []
 terms str = fromJust $ fmap mkTuple $ matchRegexAll re str
   where
@@ -31,5 +34,5 @@ parse (var, num) = ((sort var), (parse' num))
     parse' ""  = 1
     parse' "+" = 1
     parse' "-" = -1
-    parse' num = rd num
+    parse' num = rd $ rmPlus num
     rd = read :: String -> Int
