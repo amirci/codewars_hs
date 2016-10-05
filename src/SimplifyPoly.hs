@@ -7,10 +7,10 @@ import Debug.Trace
 import Text.Read
 
 simplify :: String -> String
-simplify = rmPlus . concatMap toTerm . solve . mkTerms
+simplify = rmPlus . concatMap toTerm . solve . parseTerms
   where
     solve = sortBy shortest . map sumTerms . groupBy sameFst . sort 
-    mkTerms = map parse . terms
+    parseTerms = map parse . terms
     shortest (a, _) (b, _) = compare (length a) (length b)
     sumTerms = foldl1 (\(v, n1) (_, n2) -> (v, n1 + n2))
     sameFst (a, _) (b, _) = a == b
@@ -33,5 +33,5 @@ parse (var, num) = ((sort var), (parse' num))
     parse' ""  = 1
     parse' "+" = 1
     parse' "-" = -1
-    parse' num = rd $ rmPlus num
+    parse' num = read $ rmPlus num
     rd = read :: String -> Int
