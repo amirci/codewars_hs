@@ -28,26 +28,23 @@ parseTerm "" = Nothing
 parseTerm str = Just (rest2, (var, num))
   where
     (sg, rest) = parseSign str
-    (qt, rest1) = parseNum rest
-    (var, rest2) = parseVar rest1
+    (qt, rest1) = mapFst toNum $ splitWhile isDigit rest
+    (var, rest2) = mapFst sort $ splitWhile isVar rest1
     num = sg * qt
+    isDigit = flip elem ['0'..'9']
+    isVar = flip elem ['a'..'z']
+    toNum "" = 1
+    toNum xs = read xs
+
+mapFst fn (a, b) = ((fn a), b)
 
 parseSign (a:xs)
   | a == '+' = (1, xs)
   | a == '-' = (-1, xs)
   | otherwise = (1, a:xs)
 
-parseNum str = ((toNum digits), rest)
+splitWhile pred str = (consumed, rest)
   where
-    digits = takeWhile isDigit str
-    rest = drop (length digits) str
-    isDigit = flip elem ['0'..'9']
-    toNum "" = 1
-    toNum xs = read xs
-
-parseVar str = (var, rest)
-  where
-    isChar = flip elem ['a'..'z']
-    var = sort $ takeWhile isChar str
-    rest = drop (length var) str
+    consumed = takeWhile pred str
+    rest = drop (length consumed) str
 
